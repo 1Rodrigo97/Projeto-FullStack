@@ -42,6 +42,27 @@ async function startServer() {
     console.error('Não foi possível conectar ou sincronizar o banco de dados:', error);
   }
 }
+// server.js (trecho importante para a rota)
 
+// ... (código anterior)
+
+// ------------------------------------------
+// 3. IMPORTAÇÃO E USO DAS ROTAS
+// ------------------------------------------
+const authRoutes = require('./routes/authRoutes');
+
+// Middleware para processar JSON nas requisições
+app.use(express.json());
+
+// Rota de Teste Simples
+app.get('/', (req, res) => {
+  res.send('Servidor Express rodando com sucesso!');
+});
+
+// Define que todas as rotas em authRoutes.js começarão com /api/auth
+app.use('/api/auth', authRoutes);
+// ------------------------------------------
+
+// ... (função startServer no final)
 startServer();
 // ------------------------------------------
