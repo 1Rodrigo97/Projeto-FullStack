@@ -1,56 +1,51 @@
-// controllers/authController.js
+// controllers/authController.js (Nova função exports.login)
 
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // Nosso modelo de Usuário
-
-// Chave secreta: usar no .env é obrigatório, mas para testar, vamos usar um valor padrão
-// Em um projeto real, NUNCA use um valor fixo aqui.
-const JWT_SECRET = process.env.JWT_SECRET || 'umaChaveSecretaMuitoForte12345'; 
-
-// Funções utilitárias:
-const SALT_ROUNDS = 10; // Nível de dificuldade para criptografar a senha
+// ... (Restante do código, como as importações e a constante JWT_SECRET)
 
 /**
- * Lógica para registrar um novo usuário
+ * Lógica para fazer login de um usuário existente
  */
-exports.signup = async (req, res) => {
-  const { email, password, username } = req.body;
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
 
-  // 1. Validação básica (ver se o corpo da requisição está ok)
   if (!email || !password) {
     return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
   }
 
   try {
-    // 2. Criptografar a senha
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    // 1. Procurar o usuário pelo email
+    const user = await User.findOne({ where: { email } });
 
-    // 3. Criar o usuário no banco de dados
-    const newUser = await User.create({
-      email,
-      username: username || email, // Se não tiver username, usa o email
-      password: hashedPassword,
-    });
+    // 2. Verificar se o usuário existe
+    if (!user) {
+      // Usar a mesma mensagem de erro para não dar dicas sobre a existência do email
+      return res.status(401).json({ message: 'Credenciais inválidas.' }); 
+    }
 
-    // 4. Gerar o Token de Acesso (JWT)
-    const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, {
+    // 3. Comparar a senha fornecida com a senha criptografada no DB
+    // O bcrypt.compare desfaz a criptografia da senha enviada e compara com a do DB
+    const isPasswordValid = await bcrypt.compare(password, user.password); 
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Credenciais inválidas.' });
+    }
+
+    // 4. Gerar um novo Token JWT para a sessão
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
       expiresIn: '1d', // Token expira em 1 dia
     });
 
     // 5. Resposta de sucesso
-    return res.status(201).json({ 
-      message: 'Usuário registrado com sucesso!', 
-      user: { id: newUser.id, email: newUser.email, username: newUser.username },
-      token 
+    return res.status(200).json({
+      message: 'Login realizado com sucesso!',
+      user: { id: user.id, email: user.email, username: user.username },
+      token, // Envia o token para o frontend
     });
 
   } catch (error) {
-    // Tratamento de erro (ex: email duplicado)
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(409).json({ message: 'Este e-mail já está em uso.' });
-    }
     console.error(error);
-    return res.status(500).json({ message: 'Erro interno ao registrar usuário.' });
+    return res.status(500).json({ message: 'Erro interno no servidor.' });
   }
 };
+
+// ... (Restante do código, como a função exports.signup)

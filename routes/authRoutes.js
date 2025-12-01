@@ -7,7 +7,7 @@ const authController = require('../controllers/authController');
 // Rota de Registro
 router.post('/signup', authController.signup);
 
-// Rota de Login (faremos no próximo passo)
-// router.post('/login', authController.login); 
+// Rota de Login (AGORA ATIVA)
+router.post('/login', authController.login); 
 
 module.exports = router;
