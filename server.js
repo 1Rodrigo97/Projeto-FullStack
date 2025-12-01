@@ -1,8 +1,8 @@
-// server.js - Versão Final de Backend
+// server.js - Versão Final e Limpa
 
 const express = require('express');
 const app = express();
-const path = require('path'); // Necessário para servir arquivos estáticos e HTML
+const path = require('path'); 
 require('dotenv').config(); 
 const port = process.env.PORT || 3000; 
 
@@ -12,20 +12,20 @@ const port = process.env.PORT || 3000;
 const sequelize = require('./config/database');
 const User = require('./models/User'); 
 const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes'); // <-- Rota Protegida
+const userRoutes = require('./routes/userRoutes'); 
 
 // ------------------------------------------
 // 2. CONFIGURAÇÕES DE MIDDLEWARE
 // ------------------------------------------
 
-// Middleware para servir arquivos estáticos (Frontend Vue.js)
+// ⚠️ Este é o middleware crucial que diz ao Express para procurar arquivos na pasta 'public'.
 app.use(express.static(path.join(__dirname, 'public'))); 
 
 // Middleware para processar requisições com corpo JSON
 app.use(express.json()); 
 
 // ------------------------------------------
-// 3. DEFINIÇÃO DAS ROTAS
+// 3. DEFINIÇÃO DAS ROTAS DA API
 // ------------------------------------------
 
 // Rotas públicas de autenticação (Signup, Login)
@@ -34,29 +34,32 @@ app.use('/api/auth', authRoutes);
 // Rotas privadas que exigem autenticação (Ex: /api/users/profile)
 app.use('/api/users', userRoutes); 
 
-// Rota Catch-all (para o Frontend): serve o index.html em qualquer rota não-API
-// Isso é essencial para o conceito de SPA (Single Page Application)
-app.get('*', (req, res) => {
-    // Verifica se a requisição não é para uma API antes de servir o HTML
+// ------------------------------------------
+// 4. ROTA CATCH-ALL PARA O FRONTEND (SPA)
+// ------------------------------------------
+// ⚠️ Usamos app.use em vez de app.get para ser menos estrito no roteamento.
+// Esta rota deve ser a ÚLTIMA! Ela lida com todos os caminhos restantes.
+app.use((req, res) => {
+    // A rota estática (express.static) já serviu o index.html na raiz (/)
+    // Esta lógica lida com sub-rotas como /perfil, que a SPA Vue precisa.
     if (!req.url.startsWith('/api')) {
         return res.sendFile(path.join(__dirname, 'public', 'index.html'));
     }
-    // Caso contrário, deixa o Express tratar a rota ou retornar um 404
+    
+    // Se for uma rota de API não encontrada, retorna 404
+    res.status(404).send('API endpoint not found');
 });
-
 // ------------------------------------------
-// 4. FUNÇÃO PARA INICIAR O SERVIDOR E SINCRONIZAR O DB
+// 5. FUNÇÃO PARA INICIAR O SERVIDOR E SINCRONIZAR O DB
 // ------------------------------------------
 async function startServer() {
   try {
     await sequelize.authenticate();
     console.log('Conexão com o banco de dados estabelecida com sucesso.');
 
-    // Sincroniza todos os modelos (cria ou altera as tabelas)
     await sequelize.sync({ alter: true }); 
     console.log('Modelos de banco de dados sincronizados.');
 
-    // Inicia o Servidor
     app.listen(port, () => {
       console.log(`Servidor rodando em http://localhost:${port}`);
     });

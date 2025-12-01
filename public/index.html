@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto Fullstack Vue & Express</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        /* Estilos simples para visualização */
+        #app { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ccc; border-radius: 8px; }
+        input, button { padding: 10px; margin-bottom: 10px; display: block; width: 100%; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { opacity: 0.8; }
+        .error { color: red; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>🔐 Autenticação</h1>
+
+        <div v-if="!token">
+            <h2>{{ isLogin ? 'Fazer Login' : 'Novo Cadastro' }}</h2>
+            <p class="error" v-if="errorMessage">{{ errorMessage }}</p>
+
+            <form @submit.prevent="authAction">
+                <input type="email" v-model="auth.email" placeholder="E-mail" required>
+                <input type="password" v-model="auth.password" placeholder="Senha" required>
+                <button type="submit">{{ isLogin ? 'Entrar' : 'Cadastrar' }}</button>
+            </form>
+
+            <p style="text-align: center;">
+                <a href="#" @click.prevent="isLogin = !isLogin">
+                    {{ isLogin ? 'Não tem conta? Cadastre-se' : 'Já sou cadastrado' }}
+                </a>
+            </p>
+        </div>
+
+        <div v-else>
+            <h2>✨ Olá, {{ user.email }}!</h2>
+            <p>Você está autenticado. O token JWT está salvo localmente.</p>
+            
+            <button @click="fetchProfile">Testar Rota Protegida (Perfil)</button>
+            <p style="white-space: pre-wrap; background-color: #f4f4f4; padding: 10px;" v-if="profileMessage">{{ profileMessage }}</p>
+            
+            <button @click="logout" style="background-color: #f44336; margin-top: 20px;">Sair (Logout)</button>
+        </div>
+    </div>
+
+    <script src="/main.js"></script>
+</body>
+</html>
