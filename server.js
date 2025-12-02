@@ -1,10 +1,12 @@
-// server.js - Versão Final e Limpa
+// server.js
 
 const express = require('express');
 const app = express();
-const path = require('path'); 
-require('dotenv').config(); 
-const port = process.env.PORT || 3000; 
+const path = require('path');
+const cors = require('cors'); 
+require('dotenv').config();
+// A variável 'port' agora pode ler process.env.PORT
+const port = process.env.PORT || 3000;
 
 // ------------------------------------------
 // 1. IMPORTAÇÕES DE DB e ROTAS
@@ -18,11 +20,13 @@ const userRoutes = require('./routes/userRoutes');
 // 2. CONFIGURAÇÕES DE MIDDLEWARE
 // ------------------------------------------
 
-// ⚠️ Este é o middleware crucial que diz ao Express para procurar arquivos na pasta 'public'.
-app.use(express.static(path.join(__dirname, 'public'))); 
+// 2.1. O CORS DEVE VIR PRIMEIRO PARA DESBLOQUEAR A COMUNICAÇÃO
+app.use(cors()); 
 
-// Middleware para processar requisições com corpo JSON
-app.use(express.json()); 
+// 2.2. Middleware para servir arquivos estáticos (Frontend Vue.js)
+app.use(express.static(path.join(__dirname, 'public')));
+// 2.3. Middleware para processar requisições com corpo JSON
+app.use(express.json());
 
 // ------------------------------------------
 // 3. DEFINIÇÃO DAS ROTAS DA API
@@ -40,14 +44,14 @@ app.use('/api/users', userRoutes);
 // ⚠️ Usamos app.use em vez de app.get para ser menos estrito no roteamento.
 // Esta rota deve ser a ÚLTIMA! Ela lida com todos os caminhos restantes.
 app.use((req, res) => {
-    // A rota estática (express.static) já serviu o index.html na raiz (/)
-    // Esta lógica lida com sub-rotas como /perfil, que a SPA Vue precisa.
+    // A rota estática já serviu o index.html na raiz (/). 
+    // Esta lógica é para sub-rotas como /perfil.
     if (!req.url.startsWith('/api')) {
         return res.sendFile(path.join(__dirname, 'public', 'index.html'));
     }
     
-    // Se for uma rota de API não encontrada, retorna 404
-    res.status(404).send('API endpoint not found');
+    // CORREÇÃO: Se for uma rota de API não encontrada (404), retorna JSON VÁLIDO.
+    return res.status(404).json({ message: 'API endpoint not found.' });
 });
 // ------------------------------------------
 // 5. FUNÇÃO PARA INICIAR O SERVIDOR E SINCRONIZAR O DB

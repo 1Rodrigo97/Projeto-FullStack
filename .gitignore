@@ -1,0 +1,17 @@
+# .gitignore
+
+# Dependências
+/node_modules/
+package-lock.json
+
+# Arquivos de Segurança
+.env
+
+# Banco de Dados
+database.sqlite
+
+# Configurações do VS Code (Opcional, mas comum ignorar)
+/.vscode/
+
+# Logs e outros
+npm-debug.log*

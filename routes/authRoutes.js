@@ -1,18 +1,15 @@
-// routes/userRoutes.js
+// routes/authRoutes.js
 
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middlewares/authMiddleware');
+const authController = require('../controllers/authController');
 
-// Esta rota só pode ser acessada se o middleware de autenticação for bem-sucedido
-router.get('/profile', authMiddleware.verifyToken, (req, res) => {
-  // Se chegou aqui, o token é válido e temos o ID e Email do usuário na requisição
-  res.json({
-    message: 'Bem-vindo ao seu perfil! Você está autenticado.',
-    userId: req.userId,
-    userEmail: req.userEmail,
-    data: new Date().toISOString()
-  });
-});
+// Rota de Registro
+// O caminho FINAL será /api/auth + /signup
+router.post('/signup', authController.signup);
+
+// Rota de Login
+// O caminho FINAL será /api/auth + /login
+router.post('/login', authController.login); 
 
 module.exports = router;
