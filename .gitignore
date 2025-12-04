@@ -1,17 +1,21 @@
 # .gitignore
 
-# Dependências
-/node_modules/
-package-lock.json
-
-# Arquivos de Segurança
+# 🛑 1. ARQUIVOS DE AMBIENTE E SEGURANÇA
+# O .env contém JWT_SECRET e DATABASE_URL. Nunca deve ser comitado.
 .env
 
-# Banco de Dados
+# 🛑 2. ARQUIVOS GERADOS/LOCAIS
+# Banco de dados SQLite local (se usado como fallback)
 database.sqlite
 
-# Configurações do VS Code (Opcional, mas comum ignorar)
-/.vscode/
+# Pasta temporária criada pelo Multer para uploads de CSV
+/uploads
 
-# Logs e outros
+# 3. DEPENDÊNCIAS
+# Pasta que contém todas as dependências baixadas
+/node_modules/
+package-lock.json 
+
+# 4. CONFIGURAÇÕES DO VS CODE E OUTROS
+/.vscode/
 npm-debug.log*
