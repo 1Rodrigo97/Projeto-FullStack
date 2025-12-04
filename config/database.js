@@ -1,18 +1,27 @@
-// config/database.js
+// config/database.js (VERSÃO CORRIGIDA)
 
 const { Sequelize } = require('sequelize');
-const path = require('path');
 
-// Cria uma instância do Sequelize
-// 'development' é o nome arbitrário da conexão
-const sequelize = new Sequelize('database', 'username', 'password', {
-  // Configuração para usar SQLite
-  dialect: 'sqlite',
-  // Especifica onde o arquivo .sqlite será criado
-  storage: path.join(__dirname, '..', 'database.sqlite'), 
-  
-  // Opcional: Para evitar logs desnecessários no console
+if (!process.env.DATABASE_URL) {
+  console.error("ERRO: DATABASE_URL não está definida no .env. Configure o PostgreSQL.");
+  process.exit(1); 
+}
+
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: 'postgres',
   logging: false, 
+  // 🚨 CORREÇÃO: Remova ou comente o bloco SSL para conexões locais.
+  // Deixamos vazio, ou definimos 'ssl: false' se necessário.
+  dialectOptions: {
+      // Para o localhost, não exigimos SSL
+      // ssl: false 
+  }
+  // Se fosse para produção (nuvem), usaríamos o bloco SSL:
+  /*
+  dialectOptions: {
+    ssl: { require: true, rejectUnauthorized: false }
+  }
+  */
 });
 
 module.exports = sequelize;

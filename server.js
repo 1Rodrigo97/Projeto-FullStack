@@ -13,8 +13,14 @@ const port = process.env.PORT || 3000;
 // ------------------------------------------
 const sequelize = require('./config/database');
 const User = require('./models/User'); 
+const Task = require('./models/Task'); 
+const Customer = require('./models/Customer'); // <--- NOVO
+const Product = require('./models/Product'); // <--- NOVO
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes'); 
+const taskRoutes = require('./routes/taskRoutes'); 
+const importRoutes = require('./routes/importRoutes');
+const dataRoutes = require('./routes/dataRoutes');
 
 // ------------------------------------------
 // 2. CONFIGURAÇÕES DE MIDDLEWARE
@@ -32,11 +38,19 @@ app.use(express.json());
 // 3. DEFINIÇÃO DAS ROTAS DA API
 // ------------------------------------------
 
-// Rotas públicas de autenticação (Signup, Login)
+//Rotas públicas de autenticação (Signup, Login)
 app.use('/api/auth', authRoutes);
 
-// Rotas privadas que exigem autenticação (Ex: /api/users/profile)
+// Rotas privadas de usuário
 app.use('/api/users', userRoutes); 
+
+// Rotas de CRUD de Tarefas
+app.use('/api/tasks', taskRoutes);
+
+// NOVAS ROTAS DE IMPORTAÇÃO DE CSV
+app.use('/api/import', importRoutes);
+
+app.use('/api/data', dataRoutes); // <--- ESSENCIAL: USAR NO ENDPOINT /api/data
 
 // ------------------------------------------
 // 4. ROTA CATCH-ALL PARA O FRONTEND (SPA)

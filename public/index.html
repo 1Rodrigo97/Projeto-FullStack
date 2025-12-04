@@ -5,13 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projeto Fullstack Vue & Express</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
     <style>
-        /* Estilos simples para visualização */
-        #app { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ccc; border-radius: 8px; }
-        input, button { padding: 10px; margin-bottom: 10px; display: block; width: 100%; box-sizing: border-box; }
-        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-        button:hover { opacity: 0.8; }
-        .error { color: red; margin-bottom: 15px; }
+        /* Estilos de Layout Geral e Reset */
+        #app { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            max-width: 900px; /* Aumenta a largura para caber a tabela */
+            margin: 20px auto; 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 { color: #333; }
+        h3 {
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
+
+        /* Estilos de Formulário e Input */
+        input[type="email"], input[type="password"], input[type="text"], input[type="file"] { 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            display: block; 
+            width: 100%; 
+            box-sizing: border-box; 
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        /* Estilos de Botões */
+        button { 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            display: block; 
+            width: 100%; 
+            box-sizing: border-box; 
+            border-radius: 4px;
+            border: none;
+            cursor: pointer; 
+            transition: background-color 0.2s;
+        }
+        .btn-add, button[type="submit"] { background-color: #4CAF50; color: white; } /* Verde */
+        .btn-logout, .btn-delete { background-color: #f44336; color: white; } /* Vermelho */
+        .btn-profile { background-color: #007bff; color: white; } /* Azul */
+        .btn-import-customers { background-color: #ff9800; color: white; } /* Laranja */
+        button:hover:not(:disabled) { opacity: 0.85; }
+        button:disabled { cursor: not-allowed; opacity: 0.6; }
+        
+        .btn-delete { width: auto !important; padding: 5px 10px; font-size: 0.8em; }
+
+        .error { color: red; margin-bottom: 15px; font-weight: bold; }
+        .success-message { color: #4CAF50; font-weight: bold; padding: 10px; border: 1px solid #4CAF50; background-color: #e8f5e9; border-radius: 4px; margin-bottom: 15px; }
+
+        /* Layout de Tarefas */
+        .task-form { display: flex; gap: 10px; margin-bottom: 20px; }
+        .task-form input { margin-bottom: 0 !important; }
+        .task-list { list-style: none; padding: 0; margin-top: 0; }
+        
+        .task-item { padding: 12px; border-bottom: 1px dashed #eee; display: flex; align-items: center; justify-content: space-between; background-color: #fff; margin-bottom: 5px; border-radius: 4px; box-shadow: 0 1px 1px rgba(0,0,0,0.05); }
+        .task-content { cursor: pointer; display: flex; align-items: center; flex-grow: 1; }
+        .task-content input[type="checkbox"] { width: auto; margin-right: 15px; height: 18px; cursor: pointer; }
+
+        .completed { text-decoration: line-through; color: #aaa; }
+        
+        /* Layout de Importação e Perfil */
+        .import-manager, .profile-actions, .data-viewer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; }
+        .import-form { border: 1px solid #ddd; padding: 15px; border-radius: 4px; margin-bottom: 15px; background-color: #fff; }
+        .import-form h4 { font-size: 1.1em; margin-bottom: 15px; }
+        .profile-result { background-color: #eee; padding: 15px; border-radius: 4px; margin-bottom: 15px; overflow-x: auto; }
+        .profile-result pre { white-space: pre-wrap; margin: 0; }
+
+        /* NOVO CSS PARA TABELA */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+            table-layout: fixed;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            word-wrap: break-word; /* Para quebra de texto em colunas estreitas */
+        }
+        .data-table th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -37,12 +121,120 @@
 
         <div v-else>
             <h2>✨ Olá, {{ user.email }}!</h2>
-            <p>Você está autenticado. O token JWT está salvo localmente.</p>
             
-            <button @click="fetchProfile">Testar Rota Protegida (Perfil)</button>
-            <p style="white-space: pre-wrap; background-color: #f4f4f4; padding: 10px;" v-if="profileMessage">{{ profileMessage }}</p>
+            <section class="task-manager">
+                <h3>📋 Minhas Tarefas (Pendentes: {{ pendingTasksCount }})</h3>
+                
+                <p class="error" v-if="tasksError">{{ tasksError }}</p>
+
+                <form @submit.prevent="createTask" class="task-form">
+                    <input 
+                        type="text" 
+                        v-model="newTaskTitle" 
+                        placeholder="Nova tarefa..." 
+                        required
+                    >
+                    <button type="submit" class="btn-add" :disabled="!newTaskTitle">Adicionar</button>
+                </form>
+
+                <ul class="task-list">
+                    <li v-for="task in tasks" :key="task.id" class="task-item">
+                        <div @click="updateTaskStatus(task)" class="task-content">
+                            <input type="checkbox" :checked="task.completed"> 
+                            <span :class="{ 'completed': task.completed }">
+                                {{ task.title }}
+                            </span>
+                        </div>
+                        <button @click="deleteTask(task.id)" class="btn-delete">🗑️</button>
+                    </li>
+                </ul>
+                <p v-if="tasks.length === 0">Você não tem tarefas. Adicione uma!</p>
+            </section>
             
-            <button @click="logout" style="background-color: #f44336; margin-top: 20px;">Sair (Logout)</button>
+            <section class="import-manager">
+                <h3>📊 Importação de CSV (PostgreSQL)</h3>
+                <p class="error" v-if="importError">{{ importError }}</p>
+                <p v-if="importMessage" class="success-message">{{ importMessage }}</p>
+
+                <form @submit.prevent="handleImport('products')" class="import-form">
+                    <h4>Importar Produtos</h4>
+                    <input 
+                        type="file" 
+                        @change="handleFileChange($event, 'products')"
+                        accept=".csv"
+                        required
+                    >
+                    <button type="submit" :disabled="!productFile || productFile.type !== 'text/csv'" class="btn-profile">
+                        Carregar Produtos ({{ productFile ? productFile.name : 'Nenhum arquivo' }})
+                    </button>
+                </form>
+                
+                <form @submit.prevent="handleImport('customers')" class="import-form">
+                    <h4>Importar Clientes</h4>
+                    <input 
+                        type="file" 
+                        @change="handleFileChange($event, 'customers')"
+                        accept=".csv"
+                        required
+                    >
+                    <button type="submit" :disabled="!customerFile || customerFile.type !== 'text/csv'" class="btn-import-customers">
+                        Carregar Clientes ({{ customerFile ? customerFile.name : 'Nenhum arquivo' }})
+                    </button>
+                </form>
+            </section>
+
+            <section class="data-viewer">
+                <h3 style="margin-top: 30px;">📑 Visualização de Dados ({{ currentView.toUpperCase() }})</h3>
+                
+                <div class="view-selector" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button @click="setView('customers')" class="btn-profile" :style="{ opacity: currentView === 'customers' ? 1 : 0.6 }">
+                        Clientes ({{ totalItems }})
+                    </button>
+                    <button @click="setView('products')" class="btn-profile" :style="{ opacity: currentView === 'products' ? 1 : 0.6 }">
+                        Produtos ({{ totalItems }})
+                    </button>
+                </div>
+                
+                <p class="error" v-if="viewError">{{ viewError }}</p>
+
+                <div v-if="items.length > 0">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th v-for="key in tableHeaders" :key="key">{{ key }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in items" :key="item.id">
+                                <td v-for="header in tableHeaders" :key="header">
+                                    {{ getCellValue(item, header) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                        <p style="font-size: 0.9em; margin: 0;">Página {{ currentPage }} de {{ totalPages }}</p>
+                        <div>
+                            <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1" class="btn-profile" style="width: auto; padding: 5px 15px; margin-right: 5px;">Anterior</button>
+                            <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages" class="btn-profile" style="width: auto; padding: 5px 15px;">Próxima</button>
+                        </div>
+                    </div>
+                </div>
+                <p v-else-if="totalItems > 0">Nenhum dado encontrado para a página atual.</p>
+                <p v-else>Selecione um tipo de dado para visualizar ou importe os arquivos.</p>
+            </section>
+            
+            <div class="profile-actions">
+                <button @click="fetchProfile" class="btn-profile">Testar Rota Protegida (Perfil)</button>
+                
+                <div v-if="profileMessage" class="profile-result">
+                    <p>Resultado da API Profile:</p>
+                    <pre>{{ profileMessage }}</pre>
+                </div>
+                
+                <button @click="logout" class="btn-logout">Sair (Logout)</button>
+            </div>
         </div>
     </div>
 
